@@ -19,12 +19,16 @@ using namespace std;
 void *unit_server(void *arg){
     int socketid = *((int *)arg);
     char buf[MAX_DATA];
-    cout<<socketid<<endl;
-    recv(socketid,buf,MAX_DATA,0);
-    cout<<buf<<endl;
-    send(socketid,buf,MAX_DATA,0);
-    
-    return 0;
+    while(1){
+        // cout<<socketid<<endl;
+        recv(socketid,buf,MAX_DATA,0);
+        send(socketid,buf,MAX_DATA,0);
+        if(strcmp(buf, "quit") == 0){
+            close(socketid);
+            return 0;
+        }
+    }
+
 }
 
 int main(){
@@ -56,10 +60,6 @@ int main(){
         }
         else{
             int ret = pthread_create(&client[i],NULL,unit_server,(void*)(&new_fd[i]));
-            // recv(new_fd,buf,MAX_DATA,0);
-            // printf("%s",buf);
-            // send(new_fd,buf,MAX_DATA,0);
-            // send(new_fd,"fuck!",5,0);
         }
         i = i + 1;
     }

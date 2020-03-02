@@ -25,9 +25,10 @@ void *sender(void *arg){
     thread_data socket_message = *((thread_data *)arg);
     int socketfd = socket_message.socketfd;
     string message = socket_message.message;
-    // printf("sender:%s\n",socket_message.message.c_str());
-    // cout<<"sender"<<socket_message.message<<endl;
-    send(socketfd,message.c_str(),MAX_DATA,0);
+    for(int i=0;i<10;i++){
+        send(socketfd,message.c_str(),MAX_DATA,0);
+    }
+    send(socketfd,"quit",MAX_DATA,0);
     return 0;
 }
 void *receiver(void *arg){
@@ -37,9 +38,13 @@ void *receiver(void *arg){
     // cout<<"receiver"<<socket_message.message<<endl;
     // printf("receiver:%s\n",socket_message.message.c_str());
     char buf[MAX_DATA];
-    recv(socketfd,buf,MAX_DATA,0);
-    printf("Sent:%s; Received:%s \n",message.c_str(),buf);
-    return 0;
+    while(1){
+        recv(socketfd,buf,MAX_DATA,0);
+        if(strcmp(buf, "quit") == 0){
+                return 0;
+        }
+        printf("Sent:%s; Received:%s \n",message.c_str(),buf);
+    }
 }
 
 void *requests(void *arg){
