@@ -12,10 +12,34 @@
 #include<iostream>
 #include <stdlib.h>
 using namespace std;
-#define NUM_THREAD 16
-#define SERVER_PORT 6666
+#define NUM_THREAD 10
+#define SERVER_PORT 7000
 #define SERVER_IP "127.0.0.1"
 #define MAX_DATA 100
+
+struct thread_data{
+    int socketfd;
+    string message;
+};
+void *sender(void *arg){
+    thread_data socket_message = *((thread_data *)arg);
+    int socketfd = socket_message.socketfd;
+    string message = socket_message.message;
+    // printf("sender:%s\n",socket_message.message.c_str());
+    send(socketfd,message.c_str(),MAX_DATA,0);
+    return 0;
+}
+void *receiver(void *arg){
+    thread_data socket_message = *((thread_data *)arg);
+    int socketfd = socket_message.socketfd;
+    string message = socket_message.message;
+    
+    // printf("receiver:%s\n",socket_message.message.c_str());
+    char buf[MAX_DATA];
+    recv(socketfd,buf,MAX_DATA,0);
+    printf("Sent:%s; Received:%s \n",message.c_str(),buf);
+    return 0;
+}
 
 void *requests(void *arg){
     int socketfd;
@@ -27,7 +51,9 @@ void *requests(void *arg){
     char id_char[10];
     sprintf(id_char,"%d",id);
     string message = "TCP ";
+    struct thread_data socket_message;
     message += id_char;
+    
     // printf("%s\n",message.c_str());
     printf("Client initialization.\n");
     if ((socketfd = socket(AF_INET,SOCK_STREAM,0)) == -1){
@@ -38,18 +64,21 @@ void *requests(void *arg){
     server_addr.sin_port = htons(SERVER_PORT);
     server_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
     bzero(&(server_addr.sin_zero),sizeof(server_addr.sin_zero));
+    socket_message.socketfd = socketfd;
+    socket_message.message = message;
 
     if (connect(socketfd,(struct sockaddr*)&server_addr,sizeof(struct sockaddr_in)) == -1){
         printf("connect failed.\n");
     }
     else{
         printf("connect success.\n");
-        // int ret_send = pthread_create(&sen,NULL,sender,message);
-        // int ret_receive = pthread_create(&rec,NULL,receiver,message);
-        send(socketfd,message.c_str(),MAX_DATA,0);
-        recv(socketfd,buf,MAX_DATA,0);
-        printf("Sent:%s; Received:%s \n",message.c_str(),buf);
+        int ret_send = pthread_create(&sen,NULL,sender,(void*)(&socket_message));
+        int ret_receive = pthread_create(&rec,NULL,receiver,(void*)(&socket_message));
+        // send(socketfd,message.c_str(),MAX_DATA,0);
+        // recv(socketfd,buf,MAX_DATA,0);
+        // printf("Sent:%s; Received:%s \n",message.c_str(),buf);
     }
+    pthread_exit(NULL);
     close(socketfd);
     return 0;
 }

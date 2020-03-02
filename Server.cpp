@@ -6,7 +6,7 @@
 #include<netinet/in.h>
 #include<sys/socket.h>
 #include<sys/wait.h>
-#define PORT 6666
+#define PORT 7000
 #define BACKLOG 5
 #define MAX_DATA 100
 int main(){
@@ -17,7 +17,7 @@ int main(){
     struct sockaddr_in client_addr;
     char buf[MAX_DATA];
     if ((sockfd = socket(AF_INET,SOCK_STREAM,0)) == -1){
-        printf("socket failed:%d",errno);
+        printf("socket failed:%d\n",errno);
         return -1;
     }
     server_addr.sin_family = AF_INET;
@@ -25,18 +25,19 @@ int main(){
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     bzero(&(server_addr.sin_zero),8);
     if (bind(sockfd,(struct sockaddr*)&server_addr,sizeof(struct sockaddr)) < 0){
-        printf("bind error.");
+        printf("bind error.\n");
         return -1;
     }
     listen(sockfd,BACKLOG);
+    
     while(1){
         sin_size = sizeof(struct sockaddr_in);
         if ((new_fd = accept(sockfd,(struct sockaddr*)&client_addr,&sin_size)) == -1){
             printf("receive failed.");
         }
         else{
-            printf("receive success.");
             recv(new_fd,buf,MAX_DATA,0);
+            printf("%s",buf);
             send(new_fd,buf,MAX_DATA,0);
             // send(new_fd,"fuck!",5,0);
         }
