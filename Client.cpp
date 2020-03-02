@@ -12,8 +12,8 @@
 #include<iostream>
 #include <stdlib.h>
 using namespace std;
-#define NUM_THREAD 10
-#define SERVER_PORT 7000
+#define NUM_THREAD 16
+#define SERVER_PORT 6666
 #define SERVER_IP "127.0.0.1"
 #define MAX_DATA 100
 
@@ -26,6 +26,7 @@ void *sender(void *arg){
     int socketfd = socket_message.socketfd;
     string message = socket_message.message;
     // printf("sender:%s\n",socket_message.message.c_str());
+    // cout<<"sender"<<socket_message.message<<endl;
     send(socketfd,message.c_str(),MAX_DATA,0);
     return 0;
 }
@@ -33,7 +34,7 @@ void *receiver(void *arg){
     thread_data socket_message = *((thread_data *)arg);
     int socketfd = socket_message.socketfd;
     string message = socket_message.message;
-    
+    // cout<<"receiver"<<socket_message.message<<endl;
     // printf("receiver:%s\n",socket_message.message.c_str());
     char buf[MAX_DATA];
     recv(socketfd,buf,MAX_DATA,0);
@@ -72,14 +73,18 @@ void *requests(void *arg){
     }
     else{
         printf("connect success.\n");
+        // cout<<"ini"<<socket_message.message<<endl;
         int ret_send = pthread_create(&sen,NULL,sender,(void*)(&socket_message));
         int ret_receive = pthread_create(&rec,NULL,receiver,(void*)(&socket_message));
         // send(socketfd,message.c_str(),MAX_DATA,0);
         // recv(socketfd,buf,MAX_DATA,0);
         // printf("Sent:%s; Received:%s \n",message.c_str(),buf);
     }
-    pthread_exit(NULL);
+    pthread_join(sen,NULL); 
+    pthread_join(rec,NULL); 
+    // pthread_exit(NULL);
     close(socketfd);
+
     return 0;
 }
 
@@ -92,6 +97,8 @@ int main(){
         id[i] = i;
         ret = pthread_create(&clients[i],NULL,requests,(void*)(&id[i]));
     }
-    pthread_exit(NULL);
+    for(int i=0;i<NUM_THREAD;i++){
+        pthread_join(clients[i],NULL); 
+    }
     return 0;
 }
